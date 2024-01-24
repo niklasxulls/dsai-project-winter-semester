@@ -1,81 +1,744 @@
 ---
---- title: "main" format: html editor: visual ---
+--- 
+title: "main" 
+format: html 
+editor: visual 
+author: "Niklas Ullsperger
 ---
 
 # DSAI Projekt
 
-## Dataset
+## 1. Dataset
 
-Airbnb Daten aus New York: <https://www.kaggle.com/datasets/vrindakallu/new-york-dataset?resource=download>
+### 1.1 Allgemein
 
-### Beschreibung
+Das Daset umfasst die Listings von Airbnbs in New York zum Zeitpunkt 5.1.2024. Hierbei sei vorweggenommen, dass dieses Dataset ausschließlich die verfügbaren Immobilien, sowie dessen Bewertungen etc. enthält, aber keine Buchungen o.ä
+
+[https://www.kaggle.com/datasets/vrindakallu/new-york-dataset?resource=download](#0){.uri}
+
+<br>
+
+<br>
+
+### 1.2 Beschreibung
 
 Im Falle dieses Datasets ist eine Beobachtung eine Immobilie, also umgangssprachlich ein (Immobilien)Objekt.
 
-Im Folgenden werden die Columns des originalen Datasets, um eine bessere Übersicht zu verschaffen, in die "Spaltenkategorien" Basisdaten, geografische Daten, Host und Buchungen unterteilt und beschrieben.
+Im Folgenden werden die Columns des originalen Datasets, um dem Leser eine bessere Übersicht zu verschaffen, in die "Spaltenkategorien" Basisdaten, geografische Daten, Host und Buchungen unterteilt und im einzelnen beschrieben.
+
+<br>
 
 #### Basisdaten
 
-**id**: Unique Identifier des Objektes, id
+**id**: Unique Identifier des Objektes - id
 
-**name**: Name des Objektes
+**name**: Name des Objektes - kategorisch, nominal
 
-**price**: numerisch, stetig
+**price**: Preis des Objekts - numerisch, stetig
 
-**room_type**: Art des Objektes - Wohnung, Zimmer etc. - kategorisch, nomial
+**room_type**: Art des Objektes (Wohnung, Zimmer etc.) - kategorisch, nomial
 
-**availability_365**: An wie vielen von 365 Tagen das Objekt verfügbar ist, numerisch, diskret
+**availability_365**: An wie vielen von 365 Tagen das Objekt verfügbar ist - numerisch, diskret
 
-**license**: kategorisch, nominal oder
+**license**: Lizenz des Anbieters (unique id) - id bzw. kategorisch, nominal (tlw. steht da drinnen "Excempt")
 
-**bedrooms**: Anzahl der Schlafzimmer, numerisch diskret aber auch tlw. kategorisch nominal, z.B "Studio"
+**bedrooms**: Anzahl der Schlafzimmer - numerisch stetig (wegen 1.5) aber auch tlw. kategorisch, nominal, z.B "Studio"
 
-**beds**: Wie viele "Betten"/Schlafplätze es gibt, numrisch diskret
+**beds**: Wie viele "Betten"/Schlafplätze es gibt - numrisch, diskret
 
-**baths**: Wie viele Badezimmer es gibt, numerisch stetig (wegen 1.5)
+**baths**: Wie viele Badezimmer es gibt - numerisch, stetig (wegen 1.5)
+
+<br>
 
 #### Host
 
-**host_id**: Unique Identifier des Hosts, also der "Vermieter", id
+**host_id**: Unique Identifier des Hosts, also der "Vermieter" - id
 
-**host_name**: Name des Hosts, kategorisch nominal
+**host_name**: Name des Hosts - kategorisch, nominal
 
-**calculated_host_listings_count**: Anzahl der Objekte die der Host aktuell listet, numerisch diskret
+**calculated_host_listings_count**: Anzahl der Objekte die der Host aktuell listet - numerisch, diskret
 
-##### 
+<br>
 
 #### Geographische Daten
 
-**neighbourhood_group**: Bezirk in dem sich das Objekt befindet, kategorisch, nominal
+**neighbourhood_group**: Bezirk in dem sich das Objekt befindet - kategorisch, nominal
 
-**neighbourhood**: Grätzl in dem sich das Objekt befindet, kategorisch, nominal
+**neighbourhood**: Grätzl in dem sich das Objekt befindet - kategorisch, nominal
 
-**latitude**: X Koordinate des Objektes, numerisch stetig
+**latitude**: X Koordinate des Objektes - numerisch, stetig
 
-**longitude**: Y Koordinate des Objektes, numerisch stetig
+**longitude**: Y Koordinate des Objektes - numerisch, stetig
 
-**Buchung**
+<br>
 
-minimum_nights: Die Dindestdauer die man das Objekt in Tagen buchen muss, numerisch diskret
+#### Buchung
 
-number_of_reviews: Anzahl der Bewertungen, numerisch diskret
+**minimum_nights**: Die Mindestdauer die man das Objekt in Tagen buchen muss - numerisch, diskret
 
-last_review: Datum der letzten Bewertung
+**number_of_reviews**: Anzahl der Bewertungen - numerisch, diskret
 
-reviews_per_month: Durchschnittliche Anzahl der Bewertungen je Monat, numerisch stetig
+**last_review**: Datum der letzten Bewertung - kategorisch, ordinal (?)
 
-rating: Durchschnittliche Bewertung, numerisch stetig - bzw. "No Review" falls keine reviews
+**reviews_per_month**: Durchschnittliche Anzahl der Bewertungen je Monat - numerisch, stetig
 
-number_of_reviews_ltm: Anzahl der Bewertungen, numerisch diskret
+**rating**: Durchschnittliche Bewertung - numerisch stetig bzw. kategorisch, nominal "No Review" falls keine reviews
 
-## Loading dataset
+**number_of_reviews_ltm**: Anzahl der Bewertungen - numerisch, diskret
 
-```{r} my_data <- read.csv("data.csv")}
+<br>
+
+<br>
+
+### 1.3 Visualiserung eines Datensatzes
+
+```{r}
+if (!require(jsonlite)) install.packages("jsonlite")
+if (!require(tidyverse)) install.packages("tidyverse")
+library(jsonlite)
+library(tidyverse)
+
+data <- read.csv("data.csv")
+# json zur besseren Lesbarkeit 
+data %>% head(1) %>% toJSON() %>% prettify()
 ```
 
-You can add options to executable code like this
+<br>
 
-```{r} #| echo: false 2 * 2}
+<br>
+
+### 1.4 Überblick über das Dataset
+
+```{r}
+str(data)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+<br>
+
+<br>
+
+<br>
+
+## 2. Wissenschaftliche Fragestellung
+
+In welchem Maße beeinflussen spezifische Standortmerkmale (wie Stadtteil und geografische Lage), die Art und Kategorie der Unterkunft (z.B. ganze Wohnung, privates Zimmer) und der strukturelle Charakter des Apartments (wie Anzahl der Schlafzimmer und Bäder) die Preisgestaltung von Airbnb-Listings in New Yorks?
+
+<br>
+
+<br>
+
+<br>
+
+## 3. Logbook
+
+### 3.1 Data Preparation
+
+**Benötige Spalten:**
+
+Aufgrund meiner spezifischen Fragestellung, werden nur einige der vielen Spalten die dieses Dataset bereitstellt, benötigt. Konkret folgende:
+
+`id, name, price, room_type, bedrooms, baths, neighbourhood_group, latitude, longitude`
+
+<br>
+
+**Spalten, die gecleaned werden müssen:**
+
+Diese liegen aber nicht zwingend in der Form, die ich benötige vor. Beispielsweise enthält die Spalte `Bedroom` in der Regel numerische, stetige Werte wie beispielsweise 2 oder 2.5, in Ausnahmefällen aber aber auch den kategorisch, nominalen Werte wie "Studio". Da ein Studio in Wirklichkeit auch nur ein "großer Raum" ist, könnte man zur Analyse mittels Plots, den Wert Studio als Kompromiss in den Zimmerwert 1.5 umwandeln.
+
+Von so einem "Edge-Case" ist auch die Spalte `Baths` betroffen. Diese kann abseits numerischer, stetiger Werte auch den Wert "Not Specified" enthalten. Bezogen auf die folgendne Auswertungen könnte man beim Wert "not-specified" von dem Wert 0 ausgehen (warum sollte man das nicht spezifizieren bei der Erfassung der Daten, warum lässt Airbnb ein leeres Feld zu (User vergessen?)?) oder sich den Durschnitt der Bäder in Abhängigkeit ähnlicher Wohnungen ansehen. Der Einfachheit halber, wird hierbei aber Variante 1 verwendet.
+
+Um wieder zum wesentlichen zurückzukehren, die Werte solcher Spalten müssen in ein einheitliches, sich durchziehendes Format normalisiert werden.
+
+Von solchen Inkonsistenzen sind konkret nur die beiden oben beschriebenen Spalten betroffen:
+
+```{r}
+data %>% select(bedrooms) %>% unique
+data %>% select(baths) %>% unique
+
+```
+
+Aufgrund dessen, dass die Spalten auch String Werte enthalten werden die Daten seitens R auch so geparsed - wenn man sich mittels `str()` die Tabelle ansieht, so lässt sich erkennen, dass R hier den Datentyp "char" für die Spalte spezifiziert.
+
+Zusätzlich zu den beiden Spalten, gehören aber auch die andern Spalten, die als "Lookup" dienen, also z.B Bezirk, Grätzl und Immobilientyp in Faktorielle zur besseren Verwendung umgewandelt.
+
+Weiters werden Ausreißer, also jene Objekte die mehr als 5000 \$ pro Nächtigung kosten herausgefiltert.
+
+<br>
+
+**Tatsächliche Preparation:**
+
+```{r}
+try_convert_to_numeric <- function(x) {
+  numeric_value <- as.numeric(x)
+  ifelse(is.na(numeric_value), 0, numeric_value)
+}
+
+
+sanitized_data <- 
+data %>%
+  mutate(
+    bedrooms = case_when(
+      bedrooms == "Studio" ~ 1.5,
+      TRUE ~ try_convert_to_numeric(bedrooms)
+    ),
+    baths = case_when(
+      baths == "Not specified" ~ 0,
+      TRUE ~ try_convert_to_numeric(baths)
+    ),
+    room_type = as.factor(room_type),
+    neighbourhood_group = as.factor(neighbourhood_group),
+    neighbourhood = as.factor(neighbourhood)
+  ) %>% 
+  select (
+    id, name, price, room_type, availability_365, bedrooms, baths,
+    neighbourhood_group, neighbourhood, latitude, longitude, minimum_nights
+  ) %>%
+  filter(price < 5000)
+
+View(sanitized_data)
+```
+
+<br>
+
+<br>
+
+## 3.2 Probleme
+
+1.  Wieso auch immer, bekomme ich beim folgenden mutate von bedrooms konstant das Warning, dass "NAs durch Umwandlung erzeugt" werden. Obwohl ich sogar eine Funktion geschrieben habe, die diese Werte – falls die vorkommen sollten - dediziert zu 0 umwandelt.
+
+```{r}
+try_convert_to_numeric <- function(x) {
+  numeric_value <- as.numeric(x)
+  ifelse(is.na(numeric_value), 0, numeric_value)
+}
+
+
+data %>%
+  mutate(
+    bedrooms = case_when(
+      bedrooms == "Studio" ~ 1.5,
+      TRUE ~ try_convert_to_numeric(bedrooms)
+    )
+  ) %>% select(bedrooms) %>% unique()
+
+```
+
+2.  Nachdem "applien" von Operatoren auf ein Dataset, wird bei mir im daraus resultierenden Table nur noch die erste Seite richtig dargestellt. Alle darauffolgenden Seiten sind dann "blank". In Kombination mit Punkt 1) hat sich dadurch hier für mich das Bild ergeben, dass da ja doch irgendwie NA oder Null etc. drinnen stehen könnte... Die Lösung hierfür ist, den Output in einer Variable zu speichern und dann mittels `View(result)` zu visualsieren:
+
+    ```{r}
+    xyz <- data %>%
+      mutate(
+        bedrooms = case_when(
+          bedrooms == "Studio" ~ 1.5,
+          TRUE ~ try_convert_to_numeric(bedrooms)
+        )
+      ) %>% select(bedrooms) %>% unique()
+
+    View(xyz)
+    ```
+
+3.  Bei der Verwendung von `facet_grid` werden die daraus resultierenden Plots teilweise relativ klein dargestellt, wodurch Punkte mitunter überlappen/das ganze schlechter lesbar/analysierbar ist. Die Lösung hierfür ist es im Codeblock von R selbst die "figure size" zu konfigurieren"
+
+    ```{r fig.height=20, fig.width=8}
+    ```
+
+    Zudem kann dann zus. dazu auch der Abstand zwischen den einzelnen Plots konfiguriert werden:
+
+    ```{r}
+    theme(panel.spacing.y = unit(2, "lines"))
+    ```
+
+4.  
+
+5.  <br>
+
+<br>
+
+<br>
+
+## 4. Kurzbeschreibung der Datendokumentation
+
+<br>
+
+### 4.1 Verwendete Spalten
+
+Im Folgenden werden die 1.2 beschriebenen Spalten des Datasets, die verwendet werden gelistet. Hierbei entsprechend mit einer ggf. durch das obige "Cleaning" geänderte Beschreibung:
+
+**id**: Unique Identifier des Objektes - id
+
+**name**: Name des Objektes - kategorisch, nominal
+
+**price**: Preis des Objekts - numerisch, stetig
+
+**room_type**: Art des Objektes (Wohnung, Zimmer etc.) - kategorisch, nomial
+
+**availability_365**: An wie vielen von 365 Tagen das Objekt verfügbar ist - numerisch, diskret
+
+**bedrooms**: Anzahl der Schlafzimmer - numerisch, stetig
+
+**baths**: Wie viele Badezimmer es gibt - numerisch, stetig (wegen 1.5)
+
+**neighbourhood_group**: Bezirk in dem sich das Objekt befindet - kategorisch, nominal
+
+**neighbourhood**: Grätzl in dem sich das Objekt befindet - kategorisch, nominal
+
+**latitude**: X Koordinate des Objektes - numerisch, stetig
+
+**longitude**: Y Koordinate des Objektes - numerisch, stetig
+
+**minimum_nights**: Die Mindestdauer die man das Objekt in Tagen buchen muss - numerisch, diskret
+
+<br>
+
+<br>
+
+### 4.2 Exemplarische Datensätze
+
+```{r}
+if (!require(jsonlite)) install.packages("jsonlite")
+if (!require(tidyverse)) install.packages("tidyverse")
+library(jsonlite)
+library(tidyverse)
+
+# json zur besseren Lesbarkeit 
+sanitized_data %>% head(5) %>% toJSON() %>% prettify()
+```
+
+<br>
+
+<br>
+
+<br>
+
+## 5. Beschreibung der Daten inkl. Plots
+
+### 5.1 Deskriptive Statistik
+
+#### 5.1.1 Erklärung
+
+Im folgenden werden je numerischen Column, die Lagemaße, das Minimum & Maximum, sowie auch die Standardabweichung dargestellt.
+
+Bei den kategorischen Columns, wird im Gegensatz dazu lediglich die relative Häufigkeit je Wert dargestellt.
+
+Hierbei sei erwähnt, dass von dieser Statistik die id, die neighborhood und die latitude/longitude Spalten excludiert werden:
+
+-   id: kein Mehrwert
+
+-   neighborhood: zu viele Werte, vor allem oftmals mit rel. Häufigkeit unter 1%, Visualisierung bringt nicht wirlich etwas
+
+-   latitude/longitude: Bei Koordinaten kann man mit einem Median, Standardabweichung etc. perse wenig anfangen (z.B um sich einen Überblick zu verschaffen)
+
+<br>
+
+#### 5.1.2 Auswertung
+
+```{r}
+if (!require(vtable)) install.packages("vtable")
+library(vtable)
+library(tidyverse)
+
+columns_to_exclude <- c('id', 'neighbourhood', 'latitude', 'longitude')
+# alle column names und obige extrahieren
+columns <- sanitized_data %>% colnames() %>% setdiff(columns_to_exclude)
+
+# nur obige columns visualisieren, Visualisierung mittels kable (inline statt Viewer) & zus. Median errechnen
+sumtable(sanitized_data, vars = columns, add.median = TRUE, out = 'kable')
+```
+
+<br>
+
+#### 5.1.3 Beschreibung der ausgewerteten Daten
+
+**price:** Der durschnittl. Preis je Nacht liegt bei ca. 199 \$, Median bei 125 \$, jedoch ist dieser relativ volatil, was an der Standardabweichung von 196 \$ erkennen lässt. Das liegt vermutlich an den hohen Preisen der Objekte im Q4 - ca. 25% der Daten haben einen Preis der ca. zwischen 199 nd 100.000 liegt. Dies ist wahrscheinlich auf unterschiedliche Lagen/Typen zurückzuführen - Einzelnzimmer kostet deutlich weniger als gesamte Wohnung..., kann aber genausogut nur ein Ausreißer sein, der die stdev so dermaßen hochtreibt: hierzu dann aber mehr weiter unten
+
+**room_type:** Am populärsten sind Apartments/Häuser, gefolgt von Einzelräumen in Apartments/Häusern, Hotelzimmer und geteilte Räume sind auf die Gesamtanzahl gerechnet, praktisch nicht präsent.
+
+**availibility_365**: Ein Objekt steht durchschn. 206 Tage je Jahr zur Verfügung bzw. laut Median 214 Tage je Jahr, also relativ ähnlich. Hier ist aber auch wieder die Standardabweichung mit 135 Tagen relativ hoch. Jedenfalls kann gesagt werden, das mehr als die Hälfte aller Objekte über ein halbes Jahr (je Jahr) zur Verfügung stehen, daher diese wahrscheinlich dediziert für die Vermietung angedacht sind oder im Falle eines Zweitwohnsitzes z.B die eine Jahreshälfte vermietet werden.
+
+**bedrooms:** Die meisten Objekte beschränken sich auf 1-1.5 Zimmer (Median 1, arithm. Mittel 1.4), die Standardabweichung ist hier mit 0,78 auch relativ gering.
+
+**baths:** Die meisten Objekte haben genau 1 Badezimmer (Median 1, arithm. Mittel 1.2), die Standardabweichung ist hier mit 0.48 nochmals geringer als bei den Schlafzimmern
+
+**neighbourhood_group:** Der Bezirk in dem am meisten Objekte angesiedelt ist, ist Manhatten (39%), gefolgt von Brooklyn (37%) und Queens (18%). Bronx und Staten Island kommen hierbei, gemeinsam lediglich auf 6%
+
+**minimum_nights:** Es zeigt sich, dass die mindest Anzahl an Nächtigungen laut arithm. Mittel bei 29 und Median bei 30 liegt, daher durchschnittlich 1 Monat. Hierbei lässt sich herauslesen, dass mehr als 50% der Objekte eine Mindestnächtigungsdauer von 30 Tagen haben. In Q1 sind dann vergleichsweise Objekte angesiedelt die 1 Nacht - 30 Nächte am Stück gebucht werden können, daher mehr für spontane Nächtigungen, Kurztrips/Urlaube, während sich in Q4 Objekte befinden, die dann min. 30 Nächtigungen gemietet werden müssen - also alles von meheren Monaten bis teilweise mehrere Jahre.
+
+<br>
+
+<br>
+
+### 5.2 Plots
+
+#### 5.2.1 Visualisierung der geografischen Merkmale
+
+Im Folgenden werden mittels Leaflet die Objekte entsprechend ihrer Koordinaten auf einer Karte platziert. Zus dazu. haben die Marker (ein Objekt = Marker) eine andere Farbe, die je Bezirk über die Farbpalette eruiert wird.
+
+In weiterer Folge werden die Details des Objektes beim Klick auf dieses dargestellt. Die Essenz dieser Darstellung ist es dem Leser einen Überblick über die Objekte und deren geografische Positionierung zu verschaffen, bzw. hier herauszufinden wie sich die Bezirke abgrenzen & ob diese Info mit den Koordinaten übereinstimmt, was wie in der Karte zu sehen ist der Fall ist.
+
+Sollte die Karte zu unübersichtlich sein bzw. sie aufgrund der vielen Datenpunkte etwas "hängen", dann sollte die letzte Zeile clusterOptions wieder einkommentiert werden. Diese sorgt dafür, dass die Datenpunkt je nach geograf. Nähe zusammengefasst werden und dann erst bei einem Klick auf den Cluster, Subcluster bzw. die einzelnen Objekte dargestellt werden.
+
+```{r}
+if (!require(leaflet)) install.packages("leaflet")
+library(leaflet)
+library(tidyverse)
+library(ggplot2)
+
+# Farbpalette
+palette <- colorFactor(
+  palette = "viridis", 
+  domain = sanitized_data$neighbourhood_group
+)
+
+# Map erstellen
+map <- leaflet(sanitized_data) %>%
+  addTiles() %>%  
+  addCircleMarkers(
+    ~longitude, ~latitude, 
+    color = ~palette(neighbourhood_group), 
+    opacity = 1, fillOpacity = 1, radius = 2,
+    popup = ~paste(
+      "<b>Name:</b> ", name, "<br>",
+      "<b>Price:</b> ", price, "$ <br>",
+      "<b>Neighbourhood:</b> ", neighbourhood_group, "<br>",
+      "<b>Room Type:</b> ", room_type, "<br>",
+      "<b>Bedrooms:</b> ", bedrooms, "<br>",
+      "<b>Bathrooms:</b> ", baths, "<br>",
+      "<b>Min. Nights:</b> ", minimum_nights, "<br>",
+      "<b>Availability in days:</b> ", availability_365, "<br>",
+      sep = ""),
+    # clusterOptions = markerClusterOptions()
+  )
+
+# Anzeigen
+map
+```
+
+<br>
+
+#### 5.2.2 Visualisierung des Merkmales Preis
+
+Im Folgenden wird der Preis mittels zweier Histogramme dargestellt. Da wie unter 5.1 beschrieben, es beim Preis eine starke Streuung durch Ausreißer gibt, habe ich hierzu die unteren 75% der Preise in einem "normalen" Histogramm dargestellt, während ich die oberen 25% der Preise, also jene von 200 \$ - 5000 \$ in einem breiter skalierten (mehr binwith) Histogramm dargestellt habe.
+
+Letzteres ist zwar durch die logarithmische Skalierung lesbarer, stellt aber durch die Ausreise noch immer nicht all zu viele Informationen bereit. Als Alternative dazu könnte man bei der Auswertung Ausreißer zur Gänze entfernen oder wie im ersten Histogramm nochmals kleinere Subgruppen erstellen.
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+# Berechnung von Q3 Ende
+q3_border <- quantile(airbnb_data$price, 0.75)
+
+# Aufteilung der Daten
+daten_75_quartil <- subset(airbnb_data, price <= q3_border)
+daten_rest <- subset(airbnb_data, price > q3_border)
+
+# Histogramme erstellen
+histogramm_q1_q2_q3 <- ggplot(daten_75_quartil, aes(x = price)) +
+  geom_histogram(fill = "blue", color = "grey") +
+  labs(
+    title = "Preisverteilung der Listings (untere 75%)", 
+    x = "Preis", 
+    y = "Anzahl der Listings"
+  ) +
+  theme_minimal() 
+
+histogramm_q4 <- ggplot(daten_rest, aes(x = price)) +
+  geom_histogram(fill = "red", color = "grey", binwidth  = 50) + 
+  labs(
+    title = "Preisverteilung der Listings (obere 25%)", 
+    x = "Preis", 
+    y = "Anzahl der Listings"
+  ) +
+  theme_minimal() 
+
+# Anzeigen
+print(histogramm_q1_q2_q3)
+print(histogramm_q4)
+
+```
+
+<br>
+
+#### 5.2.3 Relative Häufigkeit der room_types
+
+Im Folgenden wird die relative Häufigkeit je room_type dargestellt.
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+# Berechnung der rel Häufigkeiten
+daten_raumtypen <- 
+  sanitized_data %>%
+  count(room_type) %>%
+  mutate(rel_haeufigkeit = n / sum(n))
+
+# Balkendiagramm
+raumtypen_diagramm <- 
+  ggplot(
+    daten_raumtypen, 
+    aes(x = room_type, y = rel_haeufigkeit, fill = room_type)
+  ) +
+  geom_bar(stat = "identity") + 
+  labs(
+    title = "Relative Häufigkeit der Room Types", 
+    x = "Room Type", 
+    y = "Relative Häufigkeit"
+  ) +
+  scale_y_continuous(labels = scales::percent_format()) + 
+  scale_fill_brewer(palette = "Set1") +
+  theme_minimal() 
+
+# Anzeigen
+print(raumtypen_diagramm)
+```
+
+<br>
+
+#### 5.2.6 Visualisierung der räumlichen Struktur
+
+Im Folgenden wird die räumliche Struktur anhand der Matchings von Anzahl der Schlafzimmer und Badezimmer der Immobilien visualisiert. Desto öfter das Matching auftritt, desto transparenter ist der Punkt.
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+# Plot erstellen
+p <- ggplot(
+    data = sanitized_data, 
+    aes(x = baths, y = bedrooms)
+  ) +
+  geom_point(alpha = 0.3) +
+  labs(
+    title = "Matchings der Anz. der Schlafzimmer & Badezimmer", 
+    x = "Anzahl der Badezimmer",
+    y = "Anzahl der Schlafzimmer"
+  ) +
+  theme_minimal()
+
+# Anzeigen
+print(p)
+```
+
+<br>
+
+#### 5.2.5 Visualisierung der Verfügbarkeit auf 365 Tage
+
+Im Folgenden wird die Verfügbarkeit der Immobilien (von 365 Tagen) in einem Histogram dargestellt. Hierbei werden die Einträge abhängig von der Verfügbarkeit in die Kategorien Niedrig, Mittel, Hoch und Sehr Hoch unterteilt.
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+sanitized_data <- sanitized_data %>%
+  mutate(availability_category = cut(availability_365,
+                                     breaks = c(0, 91, 182, 274, Inf),
+                                     labels = c("Niedrig", "Mittel", "Hoch", "Sehr Hoch")))
+
+# NA rows rausfiltern (sollte eig. keine geben)
+filtered_data <- sanitized_data %>% filter(!is.na(availability_category))
+
+# Histogramm
+p <- ggplot(
+    filtered_data, 
+    aes(x = availability_365)
+  ) +
+  geom_histogram(binwidth = 10, fill = "blue", color = "grey") +
+  facet_wrap(~availability_category, scales = "free") +
+  labs(
+    title = "Verfügbarkeit von 365 Tagen in Kategorien", 
+    x = "Verfügbarkeit (Tage)", 
+    y = "Anzahl der Listings"
+  ) +
+  theme_minimal() 
+
+print(p)
+```
+
+<br>
+
+<br>
+
+<br>
+
+## 6. Explorative Datenanalyse
+
+Während in der obigen Sektion ausschließlich Variablen ohne Zusammenhang visualisiert/analyisiert worden sind, geht es in dieser Sektion darum Zusammenhänge festzustellen und darzustellen.
+
+<br>
+
+### 6.1 Zusammenhang zwischen Stadtteil und Preis
+
+Im folgenden Scatterplot werden Preise in Korrelation mit dem Stadtteil gegenübergestellt. Hierbei lässt sich erkennen, dass mit Abstand die teuerste Gegend Manhatten gefolgt von Brooklyn ist, während die anderen 3 Bezirke tendentiell eher günstiger sind. Hierbei muss aber auch bedacht werden, dass sich fast 80% der Immobilien in diesen beiden Bezirken befinden, weswegen hier die Chance für Immobilien mit höheren Preisen enstpr. besser gegeben ist.
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+
+
+# Scatterplot
+p <- ggplot(
+    sanitized_data, 
+    aes(x = price, y = neighbourhood_group)
+  ) +
+  geom_jitter(width = 0.2, height = 0, alpha = 0.7) + 
+  labs(
+    title = "Zusammenhang zwischen Stadtteil und Preis",
+    x = "Preis", 
+    y = "Stadtteil"
+  ) +
+  theme_minimal() 
+
+# Anzeigen
+print(p)
+```
+
+<br>
+
+<br>
+
+### 6.2 Zusammenhang zwischen gegorafischer Lage und Preis
+
+An 6.1 anschließend, wird hier auch nochmals anhand der exakten geofrafischen Daten das Preisniveau dargestellt. Hierbei wird einfach je nachdem wie sich der Preis des Punktes zum globalen Preisdurchschnitt verhält, die Opacity dargestellt, dh. umso weniger Opacity der Punkt hat desto niedriger ist der Preis im Verhältnis zum Durschnitt und desto Höher die Opacity desto mehr fällt der Preis in den Durschnitt bzw. übersteigt diesen.
+
+Zudem wird hier auch nochmals die Farbe der Marker je nach Bezirk determiniert, sodass sich das Preisniveau besser in Bezirke eingrenzen lässt.
+
+Hierbei sei erwähnt, dass in der Karte lediglich eine Stichprobe, dessen Größe mittels der Variable sample_size bestimmt wird, dargestellt wird, da ansonsten die Übersichtlichkeit verloren geht, wenn alle Punkte dargestellt werden - Überlappungen würden hier das Bild verzerren.
+
+Wie auch in 6.1 lässt sich erkennen, dass Manhatten (türkis) und Broklyn (lila) die teuerten Gegenden sind.
+
+```{r}
+if (!require(leaflet)) install.packages("leaflet")
+library(leaflet)
+library(tidyverse)
+library(ggplot2)
+
+# Farbpalette
+palette <- colorFactor(
+  palette = "viridis", 
+  domain = sanitized_data$neighbourhood_group
+)
+
+average_price <- mean(sanitized_data$price)
+
+# Opacity based on price
+calculate_alpha <- function(price) {
+  alpha <- (price / average_price) * 0.9 + 0.1
+  return(alpha)
+}
+
+# Stichprobe extrahieren
+sample_size <- 1500
+random_sample <- sanitized_data[sample(nrow(sanitized_data), sample_size), ]
+
+# Map erstellen
+map <- leaflet(random_sample) %>%
+  addTiles() %>%  
+  addCircleMarkers(
+    ~longitude, ~latitude, 
+    color = ~palette(neighbourhood_group), 
+    opacity = ~calculate_alpha(price), fillOpacity = ~calculate_alpha(price), radius = 2,
+    popup = ~paste(
+      "<b>Name:</b> ", name, "<br>",
+      "<b>Price:</b> ", price, "$ <br>",
+      "<b>Neighbourhood:</b> ", neighbourhood_group, "<br>",
+      "<b>Room Type:</b> ", room_type, "<br>",
+      "<b>Bedrooms:</b> ", bedrooms, "<br>",
+      "<b>Bathrooms:</b> ", baths, "<br>",
+      "<b>Min. Nights:</b> ", minimum_nights, "<br>",
+      "<b>Availability in days:</b> ", availability_365, "<br>",
+      sep = ""),
+    # clusterOptions = markerClusterOptions()
+  )
+
+# Anzeigen
+map
+```
+
+<br>
+
+<br>
+
+### 6.3 Zusammenhang zwischen räumlicher Struktur, Lage und Preis
+
+Im folgenden wird je Stadtteil ein Scatterplot dargestellt, in dem die Anzahl an Badezimmern, Schlafzimmern und letzten Endes der Preis gegenübergestellt werden. Hierbei gilt, desto höher der Preis desto mehr geht die Farbe in Richtung rot, desto niedriger der Preis desto mehr in Richtung blau.
+
+Wie zu erwarten, sind die hochpreisigen Objekte jene, die sowohl viele Badezimmer als auch viele Schlafzimmer haben - diese Kombination tritt freilich auch deutlich häufiger auf, als eine Kombination von vielen Schlafzimmern mit wenig Badezimmern und vice verca.
+
+Bzw. jene Objekte, die viele Schlafzimmer haben und wenige Badezimmer, sind meistens dennoch niedrig vom Preis, was sich auf den Typen des Objektes zurückführen lassen könnte. z.B ein "Shared Room" mit 12 Schlafzimmern und einem geteilten Badezimmer.
+
+Andereseits sind Objekte mit vielen Badezimmern und wenigen Schlafzimmern tendentiell auch niedrig bepreist, also meist in der Range unter 250 Dollar wie sich sehen lässt.
+
+Betrachtet man diese Informationen nun auch noch im Zusammenhang mit der Lage, so lässt sich wie auch in 6.1/2 erkennen, das Manhatten und Broklyn die teuersten gegenden sind. Vergleicht man beispielsweise bei sämtlichen der Plots die 4 vertikale Linie von links (3 Schlafzimmer), so sieht man, dass diese in Kombination mit den Badezimmern in Brooklyn & Manhatten seitens der Preisrange immer in Richtung lila/rosa/rot geht, während es bei den anderen Gegenden mehr die Richtung blau/lila/rosa ist.
+
+```{r fig.height=20, fig.width=8}
+library(tidyverse)
+library(ggplot2)
+library(tidyverse)
+library(ggplot2)
+
+sanitized_data = sanitized_data %>% filter(price < 1000)
+
+# Gruppieren
+mean_prices <- sanitized_data %>%
+  group_by(bedrooms, baths, neighbourhood_group) %>%
+  summarize(mean_price = mean(price, na.rm = TRUE))
+
+# Plot erstellen
+plot <- ggplot(
+    data = mean_prices, 
+    aes(x = bedrooms, y = baths, color = mean_price)
+  ) +
+  geom_point(size = 3) +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(
+    title = "Zusammenhang zwischen Stadtteil, Struktur und Preis",
+    x = "Anzahl der Schlafzimmer", 
+    y = "Anzahl der Badezimmer",
+    color = "Preis in $"
+  ) +
+  facet_grid(neighbourhood_group ~ .) + 
+  theme_minimal() +
+  theme(panel.spacing.y = unit(2, "lines"))
+
+# Anzeigen
+print(plot)
+```
+
+<br>
+
+<br>
+
+### 6.1.4 Zusammenhang zwischen Objekttyp, Lage und Preis
+
+Im Folgenden wird je Gegend und je Objekttyp ein Boxplot visualisiert, in dem jeweils die Preise der, der Gruppe angehörigen Immobilien dargestellt wird.
+
+Hierbei macht sich zunächst einmal wieder bemerkbar, dass der überwiegende Teil der Daten Häuser/Apartments sowie Private Rooms sind.
+
+Darüber hinaus lässt sich erkennen, dass der Median von Hotelzimmern über alle Lagen hinweg immer über dem Median aller anderen "room_types" liegt. An nächster Stelle folgt in Bezug auf das durchschnittliche Preisniveau mittels Median, der room_type ganzes Apartment/Haus. Die letzten beiden Plätze werden von den Private und shared Rooms belegt. Hierbei liegt der durschnittliche Preis nach Median der shared Rooms in allen Gegenden, bis auf Brooklyn unter jenem der Private Rooms.
+
+Zudem lässt sich erkennen, dass die Streuung innerhalb von Q2/3 in den Stadtteilen in denen am meisten Immobilien liegen, Manhatten und Brooklyn meist eine höherere Streuung aufweisen als die Pendants in den 3 Gebieten mit weniger Airbnbs.
+
+Weiters lässt sich erkennen, dass es bei den ganzen Aparments/Häusern sowie Private Rooms über alle Gegenden hinweg - am meisten Manhatten, Brooklyn und Queens davon betroffen - gerade in Q4 eine sehr hohe Streuung gibt und entsprechend über dieses Ende hinweg sehr viele Ausreißer, also Objekte die einen überaus hohen Nächtigungspreis haben.
+
+```{r fig.height=20, fig.width=8}
+library(tidyverse)
+library(ggplot2)
+
+
+ggplot(
+    data = sanitized_data, 
+    aes(x = room_type, y = price, fill = room_type)
+  ) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Set1") +
+  labs(
+    title = "Zusammenhang zwischen Lage, Objekttyp und Preis",
+    x = "Objekttyp",
+    y = "Preis in $"
+  ) +
+  facet_grid(neighbourhood_group ~ .) +
+  theme_minimal() +
+  theme(panel.spacing.y = unit(2, "lines"))
+    
+```
